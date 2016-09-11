@@ -198,8 +198,8 @@ func initVariables(i *ini.File) {
 	NodeAllowFile = getRelativePathValue(i, "Path", "node_allow", "../file/node_allow.txt", Docroot)
 	NodeDenyFile = getRelativePathValue(i, "Path", "node_deny", "../file/node_deny.txt", Docroot)
 	ReAdminStr = getStringValue(i, "Gateway", "admin", "^(127|\\[::1\\])")
-	ReFriendStr = getStringValue(i, "Gateway", "friend", "^(127|\\[::1\\])")
-	ReVisitorStr = getStringValue(i, "Gateway", "visitor", ".")
+	ReFriendStr = getStringValue(i, "Gateway", "friend", "")
+	ReVisitorStr = getStringValue(i, "Gateway", "visitor", "")
 	ServerName = getStringValue(i, "Gateway", "server_name", "")
 	if ServerName == "" {
 		log.Fatal("You must set server_name in saku.ini.")
