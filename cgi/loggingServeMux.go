@@ -51,7 +51,7 @@ func NewLoggingServeMux() *LoggingServeMux {
 
 //ServeHTTP just calles http.ServeMux.ServeHTTP after logging.
 func (s *LoggingServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.RemoteAddr, r.Method, r.URL.Path, r.Header.Get("User-Agent"), r.Header.Get("Referer"))
+	log.Println(r.Method, r.URL.Path, r.Header.Get("User-Agent"), r.Header.Get("Referer"))
 	s.ServeMux.ServeHTTP(w, r)
 }
 

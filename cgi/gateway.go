@@ -258,7 +258,7 @@ func (c *cgi) host() string {
 
 //isAdmin returns tur if matches admin regexp setted in config file.
 func (c *cgi) isAdmin() bool {
-	m, err := regexp.MatchString(cfg.ReAdminStr, c.req.RemoteAddr)
+	m, err := regexp.MatchString(cfg.ReAdminStr, c.req.Host)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -267,7 +267,7 @@ func (c *cgi) isAdmin() bool {
 
 //isFriend returns tur if matches friend regexp setted in config file.
 func (c *cgi) isFriend() bool {
-	m, err := regexp.MatchString(cfg.ReFriendStr, c.req.RemoteAddr)
+	m, err := regexp.MatchString(cfg.ReFriendStr, c.req.Host)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -276,7 +276,7 @@ func (c *cgi) isFriend() bool {
 
 //isVisitor returns tur if matches visitor regexp setted in config file.
 func (c *cgi) isVisitor() bool {
-	m, err := regexp.MatchString(cfg.ReVisitorStr, c.req.RemoteAddr)
+	m, err := regexp.MatchString(cfg.ReVisitorStr, c.req.Host)
 	if err != nil {
 		log.Fatal(err)
 	}

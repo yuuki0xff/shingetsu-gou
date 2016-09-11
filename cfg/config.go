@@ -103,6 +103,7 @@ var (
 	EnableProf           bool
 	HeavyMoon            bool
 	EnableEmbed          bool
+	TorPort              int
 )
 
 //SuffixTXT is suffix of text files.
@@ -183,15 +184,10 @@ func init() {
 func initVariables(i *ini.File) {
 	DefaultPort = getIntValue(i, "Network", "port", 8000)
 	networkModeStr := getStringValue(i, "Network", "mode", "port_opened") //port_opened,upnp,relay
-	switch networkModeStr {
-	case "port_opened":
-		NetworkMode = Normal
-	case "upnp":
-		NetworkMode = UPnP
-	default:
+	if networkModeStr != "port_opened" {
 		log.Fatal("cannot understand mode", networkModeStr)
 	}
-
+	TorPort = getIntValue(i, "Network", "tor_port", 9050)
 	MaxConnection = getIntValue(i, "Network", "max_connection", 100)
 	Docroot = getPathValue(i, "Path", "docroot", "./www")                                     //path from cwd
 	RunDir = getRelativePathValue(i, "Path", "run_dir", "../run", Docroot)                    //path from docroot
@@ -205,6 +201,10 @@ func initVariables(i *ini.File) {
 	ReFriendStr = getStringValue(i, "Gateway", "friend", "^(127|\\[::1\\])")
 	ReVisitorStr = getStringValue(i, "Gateway", "visitor", ".")
 	ServerName = getStringValue(i, "Gateway", "server_name", "")
+	if ServerName == "" {
+		log.Fatal("You must set server_name in saku.ini.")
+	}
+
 	TagSize = getIntValue(i, "Gateway", "tag_size", 20)
 	RSSRange = getInt64Value(i, "Gateway", "rss_range", 3*24*60*60)
 	TopRecentRange = getInt64Value(i, "Gateway", "top_recent_range", 3*24*60*60)

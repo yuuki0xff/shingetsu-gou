@@ -34,19 +34,21 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"golang.org/x/net/proxy"
+
 	"github.com/shingetsu-gou/shingetsu-gou/cfg"
-	"github.com/shingetsu-gou/shingetsu-gou/myself"
 	"github.com/shingetsu-gou/shingetsu-gou/util"
 )
 
 var defaultInitNode = []string{
-	"node.shingetsu.info:8000/server.cgi",
+	"s5igu2r56xhtxv7z.onion:8000/server.cgi",
 }
 
 var nodeAllow = util.NewRegexpList(cfg.NodeAllowFile)
@@ -54,6 +56,28 @@ var nodeDeny = util.NewRegexpList(cfg.NodeDenyFile)
 
 //InitNode stores initial nodes.
 var InitNode = util.NewConfList(cfg.InitnodeList, defaultInitNode)
+
+var transport *http.Transport
+
+func init() {
+	// Create a transport that uses Tor Browser's SocksPort.  If
+	// talking to a system tor, this may be an AF_UNIX socket, or
+	// 127.0.0.1:9050 instead.
+	tbProxyURL, err := url.Parse(fmt.Sprintf("socks5://127.0.0.1:%d", cfg.TorPort))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Get a proxy Dialer that will create the connection on our
+	// behalf via the SOCKS5 proxy.  Specify the authentication
+	// and re-create the dialer/transport/client if tor's
+	// IsolateSOCKSAuth is needed.
+	dialer, err := proxy.FromURL(tbProxyURL, proxy.Direct)
+	if err != nil {
+		log.Fatal(err)
+	}
+	transport = &http.Transport{Dial: dialer.Dial}
+}
 
 //Node represents node info.
 type Node struct {
@@ -102,19 +126,20 @@ func (n *Node) urlopen(url string, timeout time.Duration, fn func(string) error)
 	}
 	req.Header.Set("User-Agent", ua)
 
-	transport := http.Transport{
-		Dial: func(network, addr string) (net.Conn, error) {
-			con, errr := net.DialTimeout(network, addr, timeout)
-			if errr != nil {
-				return nil, errr
-			}
-			errr = con.SetDeadline(time.Now().Add(20 * time.Minute))
-			return con, errr
-		},
-	}
-
+	/*
+		transport := http.Transport{
+			Dial: func(network, addr string) (net.Conn, error) {
+				con, errr := net.DialTimeout(network, addr, timeout)
+				if errr != nil {
+					return nil, errr
+				}
+				errr = con.SetDeadline(time.Now().Add(20 * time.Minute))
+				return con, errr
+			},
+		}
+	*/
 	client := http.Client{
-		Transport: &transport,
+		Transport: transport,
 		Timeout:   timeout,
 	}
 
@@ -178,19 +203,18 @@ func (n *Node) Talk(message string, fn func(string) error) ([]string, error) {
 }
 
 //Ping pings to n and return response.
-func (n *Node) Ping() (string, error) {
+func (n *Node) Ping() error {
 	res, err := n.Talk("/ping", nil)
 	if err != nil {
 		log.Println("/ping", n.Nodestr, err)
-		return "", err
+		return err
 	}
 	if len(res) == 2 && res[0] == "PONG" {
-		log.Println("ponged,i am", res[1])
-		myself.SetIP(res[1])
-		return res[1], nil
+		log.Println("ponged")
+		return nil
 	}
 	log.Println("/ping", n.Nodestr, "error")
-	return "", errors.New("connected,but not ponged")
+	return errors.New("connected,but not ponged")
 }
 
 //IsAllowed returns fase if n is not allowed and denied.
@@ -207,7 +231,7 @@ func (n *Node) Join() (*Node, error) {
 		err := errors.New(fmt.Sprintln(n.Nodestr, "is not allowd"))
 		return nil, err
 	}
-	res, err := n.Talk("/join/"+Me(true).Toxstring(), nil)
+	res, err := n.Talk("/join/"+Me().Toxstring(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +271,7 @@ func (n *Node) getNode() (*Node, error) {
 
 //Bye says goodBye to n and returns true if success.
 func (n *Node) Bye() bool {
-	res, err := n.Talk("/bye/"+Me(true).Toxstring(), nil)
+	res, err := n.Talk("/bye/"+Me().Toxstring(), nil)
 	if err != nil {
 		log.Println("/bye", n.Nodestr, "error")
 		return false
@@ -366,17 +390,8 @@ func (ns Slice) Extend(a Slice) Slice {
 }
 
 // Me converts myself to *Node.
-func Me(servernameIfExist bool) *Node {
-	ip, port := myself.GetIPPort()
-	var serverName string
-	if servernameIfExist {
-		serverName = cfg.ServerName
-	}
-	if serverName == "" {
-		serverName = ip
-	}
-
-	n, err := New(fmt.Sprintf("%s:%d%s", serverName, port, cfg.ServerURL))
+func Me() *Node {
+	n, err := New(fmt.Sprintf("%s:%d%s", cfg.ServerName, cfg.DefaultPort, cfg.ServerURL))
 	if err != nil {
 		log.Fatal(err)
 	}

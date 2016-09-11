@@ -35,7 +35,6 @@ import (
 	"github.com/shingetsu-gou/shingetsu-gou/cfg"
 	"github.com/shingetsu-gou/shingetsu-gou/db"
 	"github.com/shingetsu-gou/shingetsu-gou/mch/keylib"
-	"github.com/shingetsu-gou/shingetsu-gou/myself"
 	"github.com/shingetsu-gou/shingetsu-gou/node"
 	"github.com/shingetsu-gou/shingetsu-gou/node/manager"
 	"github.com/shingetsu-gou/shingetsu-gou/recentlist"
@@ -62,11 +61,10 @@ func cron() {
 			}
 			nodes := ns[0].GetherNodes()
 			for _, i := range nodes {
-				if _, err := i.Ping(); err == nil {
+				if err := i.Ping(); err == nil {
 					break
 				}
 			}
-			myself.ResetPort()
 			manager.Initialize(nodes)
 			doSync(getall)
 			keylib.Load()

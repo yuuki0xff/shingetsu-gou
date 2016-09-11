@@ -41,7 +41,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/shingetsu-gou/go-nat"
 	"github.com/shingetsu-gou/shingetsu-gou/cfg"
 	"github.com/shingetsu-gou/shingetsu-gou/node"
 	"github.com/shingetsu-gou/shingetsu-gou/node/manager"
@@ -70,12 +69,7 @@ func ServerSetup(s *LoggingServeMux) {
 //doPing just resopnse PONG with remote addr.
 func doPing(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Header)
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	fmt.Fprint(w, "PONG\n"+host+"\n")
+	fmt.Fprint(w, "PONG\n\n")
 }
 
 //doNode returns one of nodelist. if nodelist.len=0 returns one of initNode.
@@ -104,7 +98,7 @@ func doJoin(w http.ResponseWriter, r *http.Request) {
 	if err != nil || !n.IsAllowed() {
 		return
 	}
-	if _, err := n.Ping(); err != nil {
+	if err := n.Ping(); err != nil {
 		return
 	}
 	suggest := manager.ReplaceNodeInList(n)
@@ -123,10 +117,6 @@ func doBye(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	host, path, port := s.extractHost("bye")
-	host = s.checkRemote(host)
-	if host == "" {
-		return
-	}
 	n, err := node.MakeNode(host, path, port)
 	if err == nil {
 		manager.RemoveFromList(n)
@@ -314,52 +304,7 @@ func newServerCGI(w http.ResponseWriter, r *http.Request) (serverCGI, error) {
 //remoteIP returns host if host!=""
 //else returns remoteaddr
 func (s *serverCGI) remoteIP(host string) string {
-	if host != "" {
-		return host
-	}
-	remoteAddr, _, err := net.SplitHostPort(s.req.RemoteAddr)
-	if err != nil {
-		log.Println(err)
-		return ""
-	}
-	if !isGlobal(remoteAddr) {
-		log.Println(remoteAddr, "is local IP")
-		return ""
-	}
-	return remoteAddr
-}
-
-func isGlobal(remoteAddr string) bool {
-	ip := net.ParseIP(remoteAddr)
-	if ip == nil {
-		log.Println(remoteAddr, "has illegal format")
-		return false
-	}
-	return nat.IsGlobalIP(ip) != ""
-}
-
-//checkRemote returns remoteaddr
-//if host is specified returns remoteaddr if host==remoteaddr.
-func (s *serverCGI) checkRemote(host string) string {
-	remoteAddr, _, err := net.SplitHostPort(s.req.RemoteAddr)
-	if err != nil {
-		log.Println(err)
-		return ""
-	}
-	if host == "" {
-		return remoteAddr
-	}
-	ipaddr, err := net.LookupIP(host)
-	if err != nil {
-		log.Println(err)
-		return ""
-	}
-	for _, ipa := range ipaddr {
-		if ipa.String() == remoteAddr {
-			return remoteAddr
-		}
-	}
-	return ""
+	return host
 }
 
 //makeNode makes and returns node obj from /method/ip:port.

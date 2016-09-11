@@ -43,7 +43,6 @@ import (
 	"time"
 
 	"github.com/shingetsu-gou/shingetsu-gou/cfg"
-	"github.com/shingetsu-gou/shingetsu-gou/myself"
 	"github.com/shingetsu-gou/shingetsu-gou/node"
 	"github.com/shingetsu-gou/shingetsu-gou/node/manager"
 	"github.com/shingetsu-gou/shingetsu-gou/recentlist"
@@ -129,17 +128,7 @@ func printStatus(w http.ResponseWriter, r *http.Request) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
-	var port0 string
-	switch myself.GetStatus() {
-	case cfg.Normal:
-		port0 = a.m["opened"]
-	case cfg.UPnP:
-		port0 = "UPnP"
-	case cfg.Port0:
-		port0 = a.m["port0"]
-	case cfg.Disconnected:
-		port0 = a.m["disconnected"]
-	}
+	port0 := a.m["opened"]
 
 	s := map[string]string{
 		"known_nodes":       strconv.Itoa(manager.NodeLen()),
@@ -147,7 +136,7 @@ func printStatus(w http.ResponseWriter, r *http.Request) {
 		"files":             strconv.Itoa(thread.Len()),
 		"records":           strconv.Itoa(records),
 		"cache_size":        fmt.Sprintf("%.1f%s", float64(size)/1024/1024, a.m["mb"]),
-		"self_node":         node.Me(false).Nodestr,
+		"self_node":         node.Me().Nodestr,
 		"alloc_mem":         fmt.Sprintf("%.1f%s", float64(mem.Alloc)/1024/1024, a.m["mb"]),
 		"connection_status": port0,
 	}

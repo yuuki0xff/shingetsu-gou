@@ -35,9 +35,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/shingetsu-gou/shingetsu-gou/cfg"
 	"github.com/shingetsu-gou/shingetsu-gou/db"
-	"github.com/shingetsu-gou/shingetsu-gou/myself"
 	"github.com/shingetsu-gou/shingetsu-gou/node"
 )
 
@@ -238,7 +236,7 @@ func Initialize(allnodes node.Slice) {
 		wg.Add(1)
 		go func(inode *node.Node) {
 			defer wg.Done()
-			if _, err := inode.Ping(); err == nil {
+			if err := inode.Ping(); err == nil {
 				mutex.Lock()
 				pingOK = append(pingOK, inode)
 				mutex.Unlock()
@@ -249,19 +247,16 @@ func Initialize(allnodes node.Slice) {
 	wg.Wait()
 
 	log.Println("# of nodelist:", ListLen())
-	if ListLen() == 0 {
-		myself.SetStatus(cfg.Port0)
-		tx, err := db.DB.Begin()
-		if err != nil {
-			log.Print(err)
-			return
-		}
-		for _, p := range pingOK {
-			appendToList(p)
-		}
-		if err := tx.Commit(); err != nil {
-			log.Println(err)
-		}
+	tx, err := db.DB.Begin()
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	for _, p := range pingOK {
+		appendToList(p)
+	}
+	if err := tx.Commit(); err != nil {
+		log.Println(err)
 	}
 }
 
@@ -274,7 +269,7 @@ func Join(n *node.Node) bool {
 		return false
 	}
 	flag := false
-	if hasNodeInTable("", n) || node.Me(false).Nodestr == n.Nodestr {
+	if hasNodeInTable("", n) || node.Me().Nodestr == n.Nodestr {
 		return false
 	}
 	tx, err := db.DB.Begin()
@@ -307,7 +302,7 @@ func Join(n *node.Node) bool {
 func TellUpdate(datfile string, stamp int64, id string, n *node.Node) {
 	const updateNodes = 10
 
-	tellstr := node.Me(true).Toxstring()
+	tellstr := node.Me().Toxstring()
 	if n != nil {
 		tellstr = n.Toxstring()
 	}
@@ -333,7 +328,7 @@ func NodesForGet(datfile string, searchDepth int) node.Slice {
 	ns = ns.Extend(Random(ns, 0))
 
 	for _, n := range ns {
-		if !n.Equals(node.Me(true)) && n.IsAllowed() {
+		if !n.Equals(node.Me()) && n.IsAllowed() {
 			ns2 = append(ns2, n)
 		}
 	}
