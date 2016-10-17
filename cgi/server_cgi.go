@@ -70,7 +70,7 @@ func ServerSetup(s *LoggingServeMux) {
 //doPing just resopnse PONG with remote addr.
 func doPing(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Header)
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	host, _, err := net.SplitHostPort(r.Header.Get("X-Forwarded-For"))
 	if err != nil {
 		log.Println(err)
 		return
@@ -317,7 +317,7 @@ func (s *serverCGI) remoteIP(host string) string {
 	if host != "" {
 		return host
 	}
-	remoteAddr, _, err := net.SplitHostPort(s.req.RemoteAddr)
+	remoteAddr, _, err := net.SplitHostPort(s.remoteAddr())
 	if err != nil {
 		log.Println(err)
 		return ""
@@ -341,7 +341,7 @@ func isGlobal(remoteAddr string) bool {
 //checkRemote returns remoteaddr
 //if host is specified returns remoteaddr if host==remoteaddr.
 func (s *serverCGI) checkRemote(host string) string {
-	remoteAddr, _, err := net.SplitHostPort(s.req.RemoteAddr)
+	remoteAddr, _, err := net.SplitHostPort(s.remoteAddr())
 	if err != nil {
 		log.Println(err)
 		return ""

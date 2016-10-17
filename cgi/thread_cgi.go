@@ -634,7 +634,7 @@ func (t *threadCGI) doPost() string {
 		return ""
 	}
 	proxyClient := t.req.Header.Get("X_FORWARDED_FOR")
-	log.Printf("post %s/%d_%s from %s/%s\n", ca.Datfile, ca.Stamp(), rec.ID, t.req.RemoteAddr, proxyClient)
+	log.Printf("post %s/%d_%s from %s/%s\n", ca.Datfile, ca.Stamp(), rec.ID, t.remoteAddr(), proxyClient)
 
 	if len(rec.Recstr()) > cfg.RecordLimit<<10 {
 		t.header(t.m["big_file"], "", nil, true)

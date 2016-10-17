@@ -256,9 +256,14 @@ func (c *cgi) host() string {
 	return host
 }
 
+//remoteAddr returns remote host name.
+func (c *cgi) remoteAddr() string {
+	return c.req.Header.Get("X-Forwarded-For")
+}
+
 //isAdmin returns tur if matches admin regexp setted in config file.
 func (c *cgi) isAdmin() bool {
-	m, err := regexp.MatchString(cfg.ReAdminStr, c.req.RemoteAddr)
+	m, err := regexp.MatchString(cfg.ReAdminStr, c.remoteAddr())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -267,7 +272,7 @@ func (c *cgi) isAdmin() bool {
 
 //isFriend returns tur if matches friend regexp setted in config file.
 func (c *cgi) isFriend() bool {
-	m, err := regexp.MatchString(cfg.ReFriendStr, c.req.RemoteAddr)
+	m, err := regexp.MatchString(cfg.ReFriendStr, c.remoteAddr())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -276,7 +281,7 @@ func (c *cgi) isFriend() bool {
 
 //isVisitor returns tur if matches visitor regexp setted in config file.
 func (c *cgi) isVisitor() bool {
-	m, err := regexp.MatchString(cfg.ReVisitorStr, c.req.RemoteAddr)
+	m, err := regexp.MatchString(cfg.ReVisitorStr, c.remoteAddr())
 	if err != nil {
 		log.Fatal(err)
 	}
