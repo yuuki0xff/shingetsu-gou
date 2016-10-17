@@ -56,7 +56,7 @@ func StartDaemon() {
 		log.Fatal(err)
 	}
 
-	h := fmt.Sprintf("0.0.0.0:%d", cfg.DefaultPort)
+	h := fmt.Sprintf(":%d", os.Getenv("PORT"))
 	listener, err := net.Listen("tcp", h)
 	if err != nil {
 		log.Fatalln(err)
