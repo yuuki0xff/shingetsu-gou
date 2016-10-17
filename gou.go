@@ -31,14 +31,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
-
-	"gopkg.in/natefinch/lumberjack.v2"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/shingetsu-gou/shingetsu-gou/cfg"
@@ -95,25 +92,26 @@ func expandAssets() {
 //setLogger setups logger. whici outputs nothing, or file , or file and stdout
 func setLogger(printLog, isSilent bool) {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-
-	l := &lumberjack.Logger{
-		Filename:   path.Join(cfg.LogDir, "gou.log"),
-		MaxSize:    5, // megabytes
-		MaxBackups: 10,
-		MaxAge:     28, //days
-	}
-	switch {
-	case isSilent:
-		fmt.Println("logging is discarded")
-		log.SetOutput(ioutil.Discard)
-	case printLog:
-		fmt.Println("outputs logs to stdout and ", cfg.LogDir)
-		m := io.MultiWriter(os.Stdout, l)
-		log.SetOutput(m)
-	default:
-		fmt.Println("output logs to ", cfg.LogDir)
-		log.SetOutput(l)
-	}
+	/*
+		l := &lumberjack.Logger{
+			Filename:   path.Join(cfg.LogDir, "gou.log"),
+			MaxSize:    5, // megabytes
+			MaxBackups: 10,
+			MaxAge:     28, //days
+		}
+		switch {
+		case isSilent:
+			fmt.Println("logging is discarded")
+			log.SetOutput(ioutil.Discard)
+		case printLog:
+			fmt.Println("outputs logs to stdout and ", cfg.LogDir)
+			m := io.MultiWriter(os.Stdout, l)
+			log.SetOutput(m)
+		default:
+			fmt.Println("output logs to ", cfg.LogDir)
+			log.SetOutput(l)
+		}
+	*/
 }
 
 //setupDirectories makes necessary dirs.
